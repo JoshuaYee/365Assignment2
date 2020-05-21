@@ -1,13 +1,18 @@
+
+
 <template>
 <div >
-<label for="emailInput">Email: </label><input type="text" ref="emailPost" name="emailInput">
-<br>
-<br>
-<label for="passwordInput">Password: </label> <input type="password" ref="passwordPost" name ="passwordInput">
-<br>
-<button type="button" v-on:click="Login()">Click Me!</button>
-<br>
+
+ <v-container>
+<v-card-title>About Me</v-card-title>
+<v-label for="emailInput">Email: </v-label><v-text-field type="text" ref="emailPost" name="emailInput"></v-text-field>
+
+<v-label for="passwordInput">Password: </v-label> <v-text-field type="password" ref="passwordPost" name ="passwordInput"></v-text-field>
+
+<v-btn type="button" v-on:click="Login()">Click Me!</v-btn>
+
 <label> {{ errorLabel }} </label>
+ </v-container>
 
 
 </div>
@@ -24,14 +29,14 @@ export default {
                 }
             },
     mounted: function() {
-    this.getPetition();
-    this.getSigs();
+
     },
     methods: { 
             Login: function() {
-                this.$http.post('http://csse-s365.canterbury.ac.nz:4001/api/v1/users/login', {email: this.$refs.emailPost.value,password: this.$refs.passwordPost.value})
+                this.$http.post('http://localhost:4941/api/v1/users/login', {email: this.$refs.emailPost.value,password: this.$refs.passwordPost.value})
                 .then((response) => {
                 this.petitionData = response.data;
+                Cookies.set("X-Authorization", response.headers.get("X-Authorization"))
 
             })
             .catch((error) => {

@@ -1,9 +1,8 @@
 
 
-
-
 <template>
 <div >
+<v-container>
 <h1>Petition Title</h1>
 <p>{{petitionData.title}}</p>
 <h1>Petition Id</h1>
@@ -19,6 +18,7 @@
 <p>Author country</p>
 <p>{{petitionData.authorCountry}}</p>
 <h1>Petition Photo</h1>
+<img :src="photoData" width="100" height="100" alt="NO IMG HERE">
 <h1>Signature Number </h1>
 <p>{{petitionData.signatureCount}}</p>
 <h1>Category</h1>
@@ -30,7 +30,7 @@
 <h1>List of signatures</h1>
 
 <ol><li v-for="item in petitionSigs"> name: {{ item.name }} city: {{ item.city }} country: {{ item.country }} on date: {{ item.signedDate }}</li></ol>
-
+</v-container>
 </div>
 </template>
 
@@ -41,16 +41,18 @@ export default {
                     error: "",
                     errorFlag: false,
                     petitionData: [],
-                    petitionSigs: []
+                    petitionSigs: [],
+                    photoData: ""
                 }
             },
     mounted: function() {
     this.getPetition();
     this.getSigs();
+    this.getPhoto();
     },
     methods: { 
             getPetition: function() {
-                this.$http.get('http://csse-s365.canterbury.ac.nz:4001/api/v1/petitions/1')
+                this.$http.get('http://localhost:4941/api/v1/petitions/' + this.$route.params.id)
                 .then((response) => {
                 this.petitionData = response.data;
 
@@ -60,8 +62,20 @@ export default {
                 this.errorFlag = true;
             });
         },
+            getPhoto: function() {
+                this.$http.get('http://localhost:4941/api/v1/petitions/' + this.$route.params.id + "/photo", {responseType:'blob'})
+                .then((response) => {
+                this.photoData = URL.createObjectURL(response.data);
+
+
+            })
+            .catch((error) => {
+                this.error = error;
+                this.errorFlag = true;
+            });
+        },
         getSigs: function() {
-                this.$http.get('http://csse-s365.canterbury.ac.nz:4001/api/v1/petitions/1/signatures')
+                this.$http.get('http://localhost:4941/api/v1/petitions/'+ this.$route.params.id + '/signatures')
                 .then((response) => {
                 this.petitionSigs = response.data;
             })
