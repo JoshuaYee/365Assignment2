@@ -15,6 +15,7 @@
 <!-- <label>Profile Picture(Optional, JPEG,PNG,GIF only): </label>  -->
 
 <v-btn type="button" v-on:click="Register()">Register your profile</v-btn>
+<v-btn type="button" v-on:click="toLogin()">Cancel</v-btn>
 <br>
 <label> {{ errorLabel }} </label>
 
@@ -37,6 +38,7 @@ export default {
                 }
             },
     mounted: function() {
+        this.checkLoggedStatus();
     },
     methods: { 
             Register: function() {
@@ -48,21 +50,27 @@ export default {
                     password:this.newUserPassword,
                     city: this.newUserCity,
                     country:this.newUserCountry
-                    // email: this.$refs.emailPost.value,
-                    // password: this.$refs.passwordPost.value,
-                    // city: this.$refs.cityPost.value,
-                    // country: this.$refs.countryPost.value,
                 })
                 .then((response) => {
-                this.petitionData = response.data;
-                Cookies.set("X-Authorization", response.headers.get("X-Authorization"))
+                this.$cookies.set("userId", response.data.userId);
+                this.$cookies.set("authToken", response.data.token);
+                this.$router.push("/users/" + this.$cookies.get("userId"));
+
 
             })
             .catch((error) => {
                 this.errorLabel = error;
                 this.errorFlag = true;
             });
-        }
+        },
+        checkLoggedStatus: function() {
+            if(this.$cookies.get("authToken")) {
+                this.$router.push("/users/" + this.$cookies.get("userId"));
+            }
+        },
+            toLogin: function() {
+                this.$router.push("/userslogin/")
+            }
     },
 }
 </script>

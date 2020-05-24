@@ -1,15 +1,13 @@
-
-
 <template>
 <div >
 
  <v-container>
-<v-card-title>About Me</v-card-title>
-<v-label for="emailInput">Email: </v-label><v-text-field type="text" ref="emailPost" name="emailInput"></v-text-field>
+<v-label for="emailInput">Email: </v-label><v-text-field type="text" v-model="emailPost" name="emailInput"></v-text-field>
 
-<v-label for="passwordInput">Password: </v-label> <v-text-field type="password" ref="passwordPost" name ="passwordInput"></v-text-field>
+<v-label for="passwordInput">Password: </v-label> <v-text-field type="password" v-model="passwordPost" name ="passwordInput"></v-text-field>
 
-<v-btn type="button" v-on:click="Login()">Click Me!</v-btn>
+<v-btn type="button" v-on:click="Login()">Login</v-btn>
+<v-btn type="button" v-on:click="Register()">Register</v-btn>
 
 <label> {{ errorLabel }} </label>
  </v-container>
@@ -25,25 +23,36 @@ export default {
                     errorLabel: "",
                     errorFlag: false,
                     petitionData: [],
-                    petitionSigs: []
+                    emailPost: "",
+                    passwordPost: ""
                 }
             },
     mounted: function() {
-
+     this.checkLoggedStatus();
     },
     methods: { 
             Login: function() {
-                this.$http.post('http://localhost:4941/api/v1/users/login', {email: this.$refs.emailPost.value,password: this.$refs.passwordPost.value})
+                console.log(this.emailPost)
+                this.$http.post('http://localhost:4941/api/v1/users/login', {email: this.emailPost, password: this.passwordPost})
                 .then((response) => {
-                this.petitionData = response.data;
-                Cookies.set("X-Authorization", response.headers.get("X-Authorization"))
+                this.$cookies.set("userId", response.data.userId);
+                this.$cookies.set("authToken", response.data.token);
+                this.$router.push("/users/" + this.$cookies.get("userId"));
 
             })
             .catch((error) => {
                 this.errorLabel = error;
                 this.errorFlag = true;
             });
-        }
+        },
+        checkLoggedStatus: function() {
+            if(this.$cookies.get("authToken")) {
+                this.$router.push("/users/" + this.$cookies.get("userId"));
+            }
+        },
+            Register: function() {
+                this.$router.push("/usersregister/")
+            }
     },
 }
 </script>

@@ -11,8 +11,11 @@
 <p>{{petitionData.description}}</p>
 <h1>Author</h1>
 <p>Author Picture</p>
+<img :src="userImage" width="100" height="100" alt="User Image">
 <p>Author name</p>
 <p>{{petitionData.authorName}}</p>
+<p>Author ID</p>
+<p>{{petitionData.authorId}}</p>
 <p>Author city</p>
 <p>{{petitionData.authorCity}}</p>
 <p>Author country</p>
@@ -28,8 +31,23 @@
 <h1>Closing Date</h1>
 <p>{{petitionData.closingDate}}</p>
 <h1>List of signatures</h1>
+<v-label v-if= this.errorFlag> {{error}}</v-label>
 
-<ol><li v-for="item in petitionSigs"> name: {{ item.name }} city: {{ item.city }} country: {{ item.country }} on date: {{ item.signedDate }}</li></ol>
+                <v-list-item-content v-for="item in petitionSigs">
+                    <v-card>
+
+                    <v-list-item-title> {{item.name}} at {{item.signedDate}}</v-list-item-title>
+                    <v-list-item-subtitle>From {{item.city}} {{item.country}}</v-list-item-subtitle>
+                    <img :src="getSignatoryImage(item.signatoryId)" onerror="this.src='../src/assets/defaultPP.png'" width="100" height="100" alt="User Image">
+                    </v-card>
+                </v-list-item-content>
+
+<v-btn @click="signThisPetition()">Sign This petition</v-btn>
+<v-btn @click="removeSignature()">Remove your signature</v-btn>
+<v-btn @click="backToPetitions()">Back to all Petitions</v-btn>
+<v-btn @click="toUser()">Back to my Profile</v-btn>
+<v-btn @click="editPetition()">Edit your Petition</v-btn>
+<v-btn @click="deletePetition()">Delete your Petition</v-btn>
 </v-container>
 </div>
 </template>
@@ -42,19 +60,24 @@ export default {
                     errorFlag: false,
                     petitionData: [],
                     petitionSigs: [],
-                    photoData: ""
+                    photoData: "",
+                    profilePic: "",
+                    userImage: "",
                 }
             },
     mounted: function() {
     this.getPetition();
     this.getSigs();
     this.getPhoto();
+    // this.getProfilePic();
+    // this.getUserImage();
     },
     methods: { 
             getPetition: function() {
                 this.$http.get('http://localhost:4941/api/v1/petitions/' + this.$route.params.id)
                 .then((response) => {
                 this.petitionData = response.data;
+                this.getUserImage();
 
             })
             .catch((error) => {
@@ -62,17 +85,88 @@ export default {
                 this.errorFlag = true;
             });
         },
-            getPhoto: function() {
-                this.$http.get('http://localhost:4941/api/v1/petitions/' + this.$route.params.id + "/photo", {responseType:'blob'})
-                .then((response) => {
-                this.photoData = URL.createObjectURL(response.data);
-
-
+            backToPetitions: function() {
+            this.$router.push("/viewpetitions/");
+        },
+            toUser: function() {
+            this.$router.push("/users/"+ this.$cookies.get('userId'));
+        },
+        signThisPetition: function(){
+            this.$http.post('http://localhost:4941/api/v1/petitions/' + this.$route.params.id + '/signatures/', {}, {
+                headers: {
+                    'X-Authorization': this.$cookies.get('authToken')
+                }
+            }).then((response) => {
+                this.$router.push("/viewpetitions/");
             })
             .catch((error) => {
                 this.error = error;
                 this.errorFlag = true;
             });
+            
+        },
+        editPetition: function(){
+            if(this.petitionData.authorId == this.$cookies.get("userId")) {
+                this.$router.push("/editpetition/" + this.petitionData.petitionId);
+            }
+            else {
+                console.log("not ur petition to edit")
+            }
+        },
+        deletePetition:function() {
+        this.$http.delete('http://localhost:4941/api/v1/petitions/' + this.$route.params.id, {
+                headers: {
+                    'X-Authorization': this.$cookies.get('authToken')
+                }
+            }).then((response) => {
+                this.$router.push("/viewpetitions/");
+            })
+            .catch((error) => {
+                this.error = error.response.statusText;
+                this.errorFlag = true;
+            });
+            
+        },
+        removeSignature: function(){
+            this.$http.delete('http://localhost:4941/api/v1/petitions/' + this.$route.params.id + '/signatures/', {
+                headers: {
+                    'X-Authorization': this.$cookies.get('authToken')
+                }
+            }).then((response) => {
+                this.$router.push("/viewpetitions/");
+            })
+            .catch((error) => {
+                this.error = error.response.statusText;
+                this.errorFlag = true;
+            });
+            
+        },
+    
+    
+        getUserImage: function(){
+            this.$http.get('http://localhost:4941/api/v1/users/' + this.petitionData.authorId + "/photo", {responseType:'blob'})
+            .then((response) => {
+                //bunch of error checking
+                //needs images
+                this.userImage = URL.createObjectURL(response.data);
+            })
+            .catch((error) => {
+                this.userImage = require("./assets/defaultPP.png");
+            });
+        },
+            getPhoto: function() {
+                this.$http.get('http://localhost:4941/api/v1/petitions/' + this.$route.params.id + "/photo", {responseType:'blob'})
+                .then((response) => {
+                this.photoData = URL.createObjectURL(response.data);
+            })
+            .catch((error) => {
+                this.photoData = require("./assets/logo.png"); //default pic
+            });
+        },        
+        getSignatoryImage: function(SigID){
+          //this.isBusy = true
+          console.log("HELLOOO")
+            return 'http://localhost:4941/api/v1/users/' + SigID + "/photo";
         },
         getSigs: function() {
                 this.$http.get('http://localhost:4941/api/v1/petitions/'+ this.$route.params.id + '/signatures')
